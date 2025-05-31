@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.mapper.CourseMapper">
+    <!-- 结果映射 -->
+    <resultMap id="courseMap" type="Course">
+        <id property="id" column="id"/>
+        <result property="courseName" column="course_name"/>
+        <result property="teacherName" column="teacher_name"/>
+    </resultMap>
+    
+    <!-- 学生成绩结果映射 -->
+    <resultMap id="studentWithScoreMap" type="Student">
+        <id property="id" column="student_id"/>
+        <result property="name" column="student_name"/>
+        <result property="age" column="student_age"/>
+        <result property="gender" column="student_gender"/>
+        <association property="scoreList" javaType="java.util.ArrayList" resultMap="scoreMap"/>
+    </resultMap>
+    
+    <resultMap id="scoreMap" type="Score">
+        <id property="id" column="score_id"/>
+        <result property="studentId" column="student_id"/>
+        <result property="courseId" column="course_id"/>
+        <result property="score" column="score"/>
+    </resultMap>
+    
+    <!-- 插入课程 -->
+    <insert id="insertCourse" parameterType="Course" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO course (course_name, teacher_name)
+        VALUES (#{courseName}, #{teacherName})
+    </insert>
+    
+    <!-- 根据ID查询课程 -->
+    <select id="selectCourseById" resultMap="courseMap">
+        SELECT * FROM course WHERE id = #{id}
+    </select>
+    
+    <!-- 根据课程名称查询课程 -->
+    <select id="selectCoursesByName" resultMap="courseMap">
+        SELECT * FROM course
+        WHERE course_name LIKE CONCAT('%', #{courseName}, '%')
+    </select>
+    
+    <!-- 根据课程名称查询选修该课程的所有学生及其成绩（多表联合查询） -->
+    <select id="selectStudentsByCourse" resultMap="studentWithScoreMap">
+        SELECT s.id as student_id, s.name as student_name, s.age as student_age, s.gender as student_gender,
+               c.id as course_id, c.course_name, c.teacher_name,
+               sc.id as score_id, sc.score
+        FROM course c
+        JOIN score sc ON c.id = sc.course_id
+        JOIN student s ON sc.student_id = s.id
+        WHERE c.course_name LIKE CONCAT('%', #{courseName}, '%')
+    </select>
+    
+    <!-- 更新课程信息 -->
+    <update id="updateCourse" parameterType="Course">
+        UPDATE course
+        SET course_name = #{courseName}, teacher_name = #{teacherName}
+        WHERE id = #{id}
+    </update>
+    
+    <!-- 删除课程 -->
+    <delete id="deleteCourse">
+        DELETE FROM course WHERE id = #{id}
+    </delete>
+</mapper>

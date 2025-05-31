@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.mapper.ScoreMapper">
+    <!-- 结果映射 -->
+    <resultMap id="scoreMap" type="Score">
+        <id property="id" column="id"/>
+        <result property="studentId" column="student_id"/>
+        <result property="courseId" column="course_id"/>
+        <result property="score" column="score"/>
+        <association property="student" javaType="Student">
+            <id property="id" column="student_id"/>
+            <result property="name" column="student_name"/>
+            <result property="age" column="student_age"/>
+            <result property="gender" column="student_gender"/>
+        </association>
+        <association property="course" javaType="Course">
+            <id property="id" column="course_id"/>
+            <result property="courseName" column="course_name"/>
+            <result property="teacherName" column="teacher_name"/>
+        </association>
+    </resultMap>
+    
+    <!-- 插入成绩 -->
+    <insert id="insertScore" parameterType="Score" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO score (student_id, course_id, score)
+        VALUES (#{studentId}, #{courseId}, #{score})
+    </insert>
+    
+    <!-- 根据ID查询成绩 -->
+    <select id="selectScoreById" resultMap="scoreMap">
+        SELECT sc.id, sc.student_id, sc.course_id, sc.score,
+               s.id as student_id, s.name as student_name, s.age as student_age, s.gender as student_gender,
+               c.id as course_id, c.course_name, c.teacher_name
+        FROM score sc
+        JOIN student s ON sc.student_id = s.id
+        JOIN course c ON sc.course_id = c.id
+        WHERE sc.id = #{id}
+    </select>
+    
+    <!-- 根据学生ID查询成绩 -->
+    <select id="selectScoresByStudentId" resultMap="scoreMap">
+        SELECT sc.id, sc.student_id, sc.course_id, sc.score,
+               s.id as student_id, s.name as student_name, s.age as student_age, s.gender as student_gender,
+               c.id as course_id, c.course_name, c.teacher_name
+        FROM score sc
+        JOIN student s ON sc.student_id = s.id
+        JOIN course c ON sc.course_id = c.id
+        WHERE sc.student_id = #{studentId}
+    </select>
+    
+    <!-- 根据课程ID查询成绩 -->
+    <select id="selectScoresByCourseId" resultMap="scoreMap">
+        SELECT sc.id, sc.student_id, sc.course_id, sc.score,
+               s.id as student_id, s.name as student_name, s.age as student_age, s.gender as student_gender,
+               c.id as course_id, c.course_name, c.teacher_name
+        FROM score sc
+        JOIN student s ON sc.student_id = s.id
+        JOIN course c ON sc.course_id = c.id
+        WHERE sc.course_id = #{courseId}
+    </select>
+    
+    <!-- 动态SQL查询：根据学生姓名、课程名称和成绩范围进行查询 -->
+    <select id="selectScoresByCondition" resultMap="scoreMap">
+        SELECT sc.id, sc.student_id, sc.course_id, sc.score,
+               s.id as student_id, s.name as student_name, s.age as student_age, s.gender as student_gender,
+               c.id as course_id, c.course_name, c.teacher_name
+        FROM score sc
+        JOIN student s ON sc.student_id = s.id
+        JOIN course c ON sc.course_id = c.id
+        <where>
+            <if test="studentName != null and studentName != ''">
+                AND s.name LIKE CONCAT('%', #{studentName}, '%')
+            </if>
+            <if test="courseName != null and courseName != ''">
+                AND c.course_name LIKE CONCAT('%', #{courseName}, '%')
+            </if>
+            <if test="minScore != null">
+                AND sc.score >= #{minScore}
+            </if>
+            <if test="maxScore != null">
+                AND sc.score &lt;= #{maxScore}
+            </if>
+        </where>
+        ORDER BY sc.score DESC
+    </select>
+    
+    <!-- 更新成绩 -->
+    <update id="updateScore" parameterType="Score">
+        UPDATE score
+        SET student_id = #{studentId}, course_id = #{courseId}, score = #{score}
+        WHERE id = #{id}
+    </update>
+    
+    <!-- 删除成绩 -->
+    <delete id="deleteScore">
+        DELETE FROM score WHERE id = #{id}
+    </delete>
+</mapper>

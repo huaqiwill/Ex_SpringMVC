@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.mapper.StudentMapper">
+    <!-- 结果映射 -->
+    <resultMap id="studentMap" type="Student">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="age" column="age"/>
+        <result property="gender" column="gender"/>
+    </resultMap>
+    
+    <!-- 一对多映射：学生及其所有成绩 -->
+    <resultMap id="studentWithScoresMap" type="Student" extends="studentMap">
+        <collection property="scoreList" ofType="Score">
+            <id property="id" column="score_id"/>
+            <result property="studentId" column="student_id"/>
+            <result property="courseId" column="course_id"/>
+            <result property="score" column="score"/>
+            <association property="course" javaType="Course">
+                <id property="id" column="course_id"/>
+                <result property="courseName" column="course_name"/>
+                <result property="teacherName" column="teacher_name"/>
+            </association>
+        </collection>
+    </resultMap>
+    
+    <!-- 插入学生 -->
+    <insert id="insertStudent" parameterType="Student" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO student (name, age, gender)
+        VALUES (#{name}, #{age}, #{gender})
+    </insert>
+    
+    <!-- 根据ID查询学生 -->
+    <select id="selectStudentById" resultMap="studentMap">
+        SELECT * FROM student WHERE id = #{id}
+    </select>
+    
+    <!-- 根据ID查询学生及其所有课程成绩（一对多查询） -->
+    <select id="selectStudentWithScoresById" resultMap="studentWithScoresMap">
+        SELECT s.id, s.name, s.age, s.gender,
+               sc.id as score_id, sc.student_id, sc.course_id, sc.score,
+               c.id as course_id, c.course_name, c.teacher_name
+        FROM student s
+        LEFT JOIN score sc ON s.id = sc.student_id
+        LEFT JOIN course c ON sc.course_id = c.id
+        WHERE s.id = #{id}
+    </select>
+    
+    <!-- 根据姓名模糊查询学生 -->
+    <select id="selectStudentsByName" resultMap="studentMap">
+        SELECT * FROM student
+        WHERE name LIKE CONCAT('%', #{name}, '%')
+    </select>
+    
+    <!-- 更新学生信息 -->
+    <update id="updateStudent" parameterType="Student">
+        UPDATE student
+        SET name = #{name}, age = #{age}, gender = #{gender}
+        WHERE id = #{id}
+    </update>
+    
+    <!-- 删除学生 -->
+    <delete id="deleteStudent">
+        DELETE FROM student WHERE id = #{id}
+    </delete>
+</mapper>
